@@ -5,6 +5,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.hmdp.dto.UserDTO;
 import com.hmdp.entity.User;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.servlet.HandlerExceptionResolver;
@@ -17,6 +18,7 @@ import javax.servlet.http.HttpSession;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class LoginIntercepor implements HandlerInterceptor {
 
 
@@ -27,6 +29,7 @@ public class LoginIntercepor implements HandlerInterceptor {
 
 
         if(UserHolder.getUser() == null){
+            log.info("拦截到");
             response.setStatus(401);
             return false;
         }
