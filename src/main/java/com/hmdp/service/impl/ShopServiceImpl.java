@@ -41,8 +41,8 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
     CacheClient cacheClient;
     @Override
     public Result queryById(Long id) {
-        //Shop shop = cacheClient.queryWithPathThrough("cache:shop:",id,Shop.class,this::getById,2L,TimeUnit.MINUTES);
-        Shop shop = cacheClient.queryWithLogicalExpire("cache:shop:",id,Shop.class,this::getById,20L,TimeUnit.SECONDS);
+        Shop shop = cacheClient.queryWithPathThrough("cache:shop:",id,Shop.class,this::getById,2L,TimeUnit.MINUTES);
+        //Shop shop = cacheClient.queryWithLogicalExpire("cache:shop:",id,Shop.class,this::getById,20L,TimeUnit.SECONDS);
         if (shop == null) {
             return Result.fail("店铺不存在");
         }
