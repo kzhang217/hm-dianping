@@ -11,13 +11,18 @@ import com.hmdp.entity.User;
 import com.hmdp.mapper.UserMapper;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.RegexUtils;
+import com.hmdp.utils.UserHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -77,6 +82,51 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         stringRedisTemplate.opsForHash().putAll("login:token:"+token,map);
         //stringRedisTemplate.expire("login:token:"+token,30, TimeUnit.MINUTES);
         return Result.ok(token);
+    }
+
+    @Override
+    public Result sign() {
+        Long userId= UserHolder.getUser().getId();
+        LocalDateTime localDate = LocalDateTime.now();
+
+        String keySuffix=localDate.format(DateTimeFormatter.ofPattern("yyyyMM"));
+        String key="sign:"+userId+keySuffix;
+
+        int dayOfMonth=localDate.getDayOfMonth();
+        stringRedisTemplate.opsForValue().setBit(key,dayOfMonth-1,true);
+
+        return Result.ok();
+    }
+
+    @Override
+    public Result signCount() {
+        Long userId= UserHolder.getUser().getId();
+        LocalDateTime localDate = LocalDateTime.now();
+        String keySuffix=localDate.format(DateTimeFormatter.ofPattern("yyyyMM"));
+        String key="sign:"+userId+keySuffix;
+        int dayOfMonth=localDate.getDayOfMonth();
+        List<Long> sign=stringRedisTemplate.opsForValue().bitField(key,
+                BitFieldSubCommands.create().get(BitFieldSubCommands.BitFieldType.unsigned(dayOfMonth)).valueAt(0));
+
+        if(sign==null||sign.isEmpty()){
+            return Result.ok(0);
+        }
+        Long num=sign.get(0);
+        if(num==0||num==null){
+            return Result.ok(0);
+        }
+
+        int count =0;
+        while(true){
+            if((num&1)==0){
+                break;
+            }else{
+                count++;
+            }
+            num>>>=1;
+
+        }
+        return Result.ok(count);
     }
 
     private User createUserWithPhone(String phone) {
